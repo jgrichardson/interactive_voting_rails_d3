@@ -1,0 +1,81 @@
+<div class="main-container">
+  <h1>Red vs. Blue</h1>
+  
+  <div id="vote-counter">
+    <h3>Vote Count</h3> 
+    <p>Red: <span id="red-count"><%= @votes[0] %></span></p>
+    <p>Blue: <span id="blue-count"><%= @votes[1] %></span></p>
+  </div>
+
+  <div id="voting-box" data-turbolinks="false">
+    <%= button_to 'Vote for Red', votes_path(vote: {candidate: 'red'}), remote: true %>
+    <%= button_to 'Vote for Blue', votes_path(vote: {candidate: 'blue'}), remote: true %>
+  </div>
+  <div id="plot-container">
+    <svg id="plot"></svg>
+  </div>
+
+</div>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<script>
+ 
+// ajax call to load initial json
+var loadData = function(){
+                $.ajax({
+                  type: 'GET',
+                  contentType: 'application/json; charset=utf-8',
+                  url: '/votes',
+                  dataType: 'json',
+                  success: function(data){
+                    drawBarPlot(data);
+                  },
+                  failure: function(result){
+                    error();
+                  }
+                });
+              };
+
+function error() {
+    console.log("Something went wrong!");
+}
+
+// set plot parameters
+var barWidth = 20;
+var candidates = ['red', 'blue'];
+var plotHeight = 300;
+
+// draw bar plot
+function drawBarPlot(data){
+
+  // define linear y-axis scale
+  var yScale = d3.scaleLinear()
+                 .domain([0, d3.max(data)])
+                 .range([0, (plotHeight - 50)]);
+
+  d3.select("#plot")
+    .selectAll("rect")
+    .data(data)
+    .enter()
+    .append("rect")
+    .attr("width", barWidth)
+    .attr("height", function(d){ return yScale(d); })
+    .attr("fill", function(d, i) {
+        return candidates[i];
+    })
+    .attr("x", function(d, i){
+        return (i * 100) + 90; // horizontal location of bars
+    })
+    .attr("y", function(d){ 
+        return plotHeight - yScale(d); // scale bars within plotting area
+    });
+}
+
+// load data on page load
+$(document).ready(function(){ 
+  loadData(); 
+});
+
+</script>  
+ 
